@@ -31,6 +31,10 @@ import { frames } from "./frames.data";
 
       <div class="photo-editor__preview">
         <div class="photo-editor__canvas-wrapper">
+          <!-- =================================================
+               CANVAS
+          ================================================== -->
+
           <canvas
             id="photoCanvas"
             class="photo-editor__canvas"
@@ -39,6 +43,50 @@ import { frames } from "./frames.data";
             tabindex="0"
             aria-label="Editor de fotografía. Arrastra la fotografía para ajustar el encuadre."
           ></canvas>
+
+          <!-- =================================================
+               AYUDA SOBRE EL CANVAS
+          ================================================== -->
+
+          <div
+            id="canvasHelp"
+            class="photo-editor__canvas-help"
+            aria-hidden="true"
+            hidden
+          >
+            <div class="photo-editor__canvas-help-content">
+              <span class="photo-editor__canvas-help-icon" aria-hidden="true">
+                ↔
+              </span>
+
+              <div>
+                <strong> Arrastra para ajustar tu foto </strong>
+
+                <span> Usa el zoom para acercar o alejar </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- =================================================
+               CARGANDO MARCO
+          ================================================== -->
+
+          <div
+            id="frameLoading"
+            class="photo-editor__canvas-loading"
+            role="status"
+            aria-live="polite"
+            aria-hidden="true"
+            hidden
+          >
+            <div class="photo-editor__canvas-loading-content">
+              <span
+                class="photo-editor__canvas-loading-spinner"
+                aria-hidden="true"></span>
+
+              <span id="frameLoadingText"> Aplicando marco... </span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -186,8 +234,7 @@ import { frames } from "./frames.data";
 
               <button
                 id="framesPrev"
-                class="photo-editor__frames-arrow
-                  photo-editor__frames-arrow--prev"
+                class="photo-editor__frames-arrow photo-editor__frames-arrow--prev"
                 type="button"
                 aria-label="Ver marcos anteriores"
               >
@@ -209,8 +256,7 @@ import { frames } from "./frames.data";
                 ========================================== -->
 
                 <button
-                  class="photo-editor__frame-option
-                    is-active"
+                  class="photo-editor__frame-option is-active"
                   type="button"
                   data-frame=""
                   data-frame-id="none"
@@ -219,8 +265,7 @@ import { frames } from "./frames.data";
                   aria-label="Sin marco"
                 >
                   <span
-                    class="photo-editor__frame-preview
-                      photo-editor__frame-preview--none"
+                    class="photo-editor__frame-preview photo-editor__frame-preview--none"
                   >
                     <span
                       class="photo-editor__frame-none-icon"
@@ -271,8 +316,7 @@ import { frames } from "./frames.data";
 
               <button
                 id="framesNext"
-                class="photo-editor__frames-arrow
-                  photo-editor__frames-arrow--next"
+                class="photo-editor__frames-arrow photo-editor__frames-arrow--next"
                 type="button"
                 aria-label="Ver siguientes marcos"
               >
@@ -292,6 +336,12 @@ import { frames } from "./frames.data";
               type="button"
               disabled
             >
+              <span
+                id="downloadSpinner"
+                class="photo-editor__download-spinner"
+                aria-hidden="true"
+                hidden></span>
+
               <span id="downloadText"> Descargar imagen </span>
             </button>
 

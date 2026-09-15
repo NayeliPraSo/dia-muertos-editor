@@ -25,6 +25,34 @@ const ALLOWED_IMAGE_TYPES =
   ]);
 
 
+/*
+ * Tiempo mínimo que mostramos el estado
+ * "Aplicando marco...".
+ *
+ * Evita que el spinner aparezca y desaparezca
+ * en un solo frame cuando el PNG ya está
+ * almacenado en caché.
+ */
+const MIN_FRAME_LOADING_TIME =
+  300;
+
+
+/*
+ * Tiempo que permanece visible la ayuda
+ * de "Arrastra para ajustar tu foto".
+ */
+const CANVAS_HELP_DURATION =
+  4500;
+
+
+/*
+ * Duración de la animación de salida
+ * definida en CSS.
+ */
+const CANVAS_HELP_HIDE_DURATION =
+  300;
+
+
 /* =========================================================
    ELEMENTOS DEL DOM
 ========================================================= */
@@ -82,6 +110,66 @@ const framesNextElement =
 const downloadButtonElement =
   document.querySelector<HTMLButtonElement>(
     "#downloadPhoto"
+  );
+
+
+/* =========================================================
+   NUEVOS ELEMENTOS DE ESTADO
+========================================================= */
+
+const canvasHelpElement =
+  document.querySelector<HTMLElement>(
+    "#canvasHelp"
+  );
+
+const frameLoadingElement =
+  document.querySelector<HTMLElement>(
+    "#frameLoading"
+  );
+
+const frameLoadingTextElement =
+  document.querySelector<HTMLElement>(
+    "#frameLoadingText"
+  );
+
+const downloadSpinnerElement =
+  document.querySelector<HTMLElement>(
+    "#downloadSpinner"
+  );
+
+const downloadTextElement =
+  document.querySelector<HTMLElement>(
+    "#downloadText"
+  );
+
+
+/* =========================================================
+   ESTADO DE CARGA DE LA FOTOGRAFÍA
+========================================================= */
+
+const photoStatusElement =
+  document.querySelector<HTMLElement>(
+    "#photoStatus"
+  );
+
+const photoStatusTextElement =
+  document.querySelector<HTMLElement>(
+    "#photoStatusText"
+  );
+
+const photoErrorElement =
+  document.querySelector<HTMLElement>(
+    "#photoError"
+  );
+
+const photoUploadLabelElement =
+  document.querySelector<HTMLElement>(
+    "#photoUploadLabel"
+  );
+
+const photoUploadTextElement =
+  document.querySelector<HTMLElement>(
+    "#photoUploadText"
   );
 
 
@@ -211,9 +299,11 @@ let currentImage:
   HTMLImageElement | null =
   null;
 
-let baseScale = 1;
+let baseScale =
+  1;
 
-let zoom = 1;
+let zoom =
+  1;
 
 let imageCenterX =
   canvas.width / 2;
@@ -235,10 +325,10 @@ let currentFrameId =
 
 
 /*
- * MÁSCARA ESTRICTA
+ * Máscara estricta.
  *
- * La fotografía nunca se dibuja fuera
- * de esta zona.
+ * Ningún píxel de la fotografía puede
+ * dibujarse fuera de esta zona.
  */
 let currentPhotoArea:
   PhotoArea = {
@@ -247,12 +337,8 @@ let currentPhotoArea:
 
 
 /*
- * ÁREA DE ENCUADRE
- *
- * Determina la escala mínima al 100%.
- *
- * Normalmente es más pequeña que
- * currentPhotoArea.
+ * Área utilizada para calcular el
+ * encuadre mínimo al 100%.
  */
 let currentFitArea:
   PhotoArea = {
@@ -271,6 +357,10 @@ const frameCache =
   >();
 
 
+/*
+ * Evita condiciones de carrera si el usuario
+ * cambia rápidamente entre marcos.
+ */
 let frameSelectionToken =
   0;
 
@@ -282,11 +372,51 @@ let frameSelectionToken =
 let isDragging =
   false;
 
-let dragStartX = 0;
-let dragStartY = 0;
+let dragStartX =
+  0;
 
-let centerStartX = 0;
-let centerStartY = 0;
+let dragStartY =
+  0;
+
+let centerStartX =
+  0;
+
+let centerStartY =
+  0;
+
+
+/* =========================================================
+   ESTADOS DE INTERFAZ
+========================================================= */
+
+let isApplyingFrame =
+  false;
+
+let isDownloading =
+  false;
+
+
+/*
+ * Guardamos el temporizador para poder
+ * cancelarlo si mostramos nuevamente
+ * la ayuda.
+ */
+let canvasHelpTimer:
+  number | null =
+  null;
+
+let canvasHelpHideTimer:
+  number | null =
+  null;
+
+
+/*
+ * Una vez que el usuario interactúa con
+ * la fotografía ya no necesitamos mostrar
+ * repetidamente la ayuda.
+ */
+let hasInteractedWithPhoto =
+  false;
 
 
 /* =========================================================
@@ -309,6 +439,23 @@ function clamp(
 }
 
 
+function wait(
+  milliseconds: number
+): Promise<void> {
+
+  return new Promise(
+    (resolve) => {
+
+      window.setTimeout(
+        resolve,
+        milliseconds
+      );
+
+    }
+  );
+}
+
+
 /* =========================================================
    NORMALIZAR ÁREA
 ========================================================= */
@@ -318,7 +465,9 @@ function normalizeArea(
 ): PhotoArea {
 
   const x =
-    Number.isFinite(area.x)
+    Number.isFinite(
+      area.x
+    )
       ? clamp(
           area.x,
           0,
@@ -328,7 +477,9 @@ function normalizeArea(
 
 
   const y =
-    Number.isFinite(area.y)
+    Number.isFinite(
+      area.y
+    )
       ? clamp(
           area.y,
           0,
@@ -352,7 +503,9 @@ function normalizeArea(
 
 
   const width =
-    Number.isFinite(area.width)
+    Number.isFinite(
+      area.width
+    )
       ? clamp(
           area.width,
           1,
@@ -362,7 +515,9 @@ function normalizeArea(
 
 
   const height =
-    Number.isFinite(area.height)
+    Number.isFinite(
+      area.height
+    )
       ? clamp(
           area.height,
           1,
@@ -381,7 +536,7 @@ function normalizeArea(
 
 
 /* =========================================================
-   OBTENER CONFIGURACIÓN DEL MARCO
+   CONFIGURACIÓN DEL MARCO
 ========================================================= */
 
 function getFrameConfiguration(
@@ -398,7 +553,8 @@ function getFrameConfiguration(
   return (
     frames.find(
       (frame) =>
-        frame.id === frameId
+        frame.id ===
+        frameId
     ) ??
     null
   );
@@ -425,6 +581,7 @@ function updateAreasForFrame(
       ...FULL_CANVAS_AREA,
     };
 
+
     currentFitArea = {
       ...FULL_CANVAS_AREA,
     };
@@ -444,6 +601,361 @@ function updateAreasForFrame(
     normalizeArea(
       frame.fitArea
     );
+}
+
+
+/* =========================================================
+   ESTADO DE PROCESAMIENTO DE FOTOGRAFÍA
+========================================================= */
+
+function setPhotoProcessing(
+  processing: boolean
+): void {
+
+  input.disabled =
+    processing;
+
+
+  if (photoUploadLabelElement) {
+
+    photoUploadLabelElement.style.pointerEvents =
+      processing
+        ? "none"
+        : "";
+
+    photoUploadLabelElement.style.opacity =
+      processing
+        ? "0.65"
+        : "";
+
+  }
+
+
+  if (photoStatusElement) {
+
+    photoStatusElement.hidden =
+      !processing;
+
+  }
+
+
+  if (
+    processing &&
+    photoStatusTextElement
+  ) {
+
+    photoStatusTextElement.textContent =
+      "Procesando fotografía...";
+
+  }
+
+
+  if (photoUploadTextElement) {
+
+    photoUploadTextElement.textContent =
+      processing
+        ? "Procesando..."
+        : "Seleccionar fotografía";
+
+  }
+}
+
+
+/* =========================================================
+   ERROR DE FOTOGRAFÍA
+========================================================= */
+
+function clearPhotoError(): void {
+
+  if (!photoErrorElement) {
+    return;
+  }
+
+
+  photoErrorElement.hidden =
+    true;
+
+  photoErrorElement.textContent =
+    "";
+}
+
+
+function showPhotoError(
+  message: string
+): void {
+
+  if (!photoErrorElement) {
+    return;
+  }
+
+
+  photoErrorElement.textContent =
+    message;
+
+  photoErrorElement.hidden =
+    false;
+}
+
+
+/* =========================================================
+   AYUDA SOBRE EL CANVAS
+========================================================= */
+
+function clearCanvasHelpTimers(): void {
+
+  if (
+    canvasHelpTimer !==
+    null
+  ) {
+
+    window.clearTimeout(
+      canvasHelpTimer
+    );
+
+    canvasHelpTimer =
+      null;
+
+  }
+
+
+  if (
+    canvasHelpHideTimer !==
+    null
+  ) {
+
+    window.clearTimeout(
+      canvasHelpHideTimer
+    );
+
+    canvasHelpHideTimer =
+      null;
+
+  }
+}
+
+
+function hideCanvasHelp(
+  immediate = false
+): void {
+
+  if (!canvasHelpElement) {
+    return;
+  }
+
+
+  clearCanvasHelpTimers();
+
+
+  if (
+    canvasHelpElement.hidden
+  ) {
+    return;
+  }
+
+
+  if (immediate) {
+
+    canvasHelpElement.classList.remove(
+      "is-hiding"
+    );
+
+    canvasHelpElement.hidden =
+      true;
+
+    canvasHelpElement.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+
+    return;
+  }
+
+
+  canvasHelpElement.classList.add(
+    "is-hiding"
+  );
+
+
+  canvasHelpHideTimer =
+    window.setTimeout(
+      () => {
+
+        canvasHelpElement.hidden =
+          true;
+
+        canvasHelpElement.classList.remove(
+          "is-hiding"
+        );
+
+        canvasHelpElement.setAttribute(
+          "aria-hidden",
+          "true"
+        );
+
+        canvasHelpHideTimer =
+          null;
+
+      },
+      CANVAS_HELP_HIDE_DURATION
+    );
+}
+
+
+function showCanvasHelp(): void {
+
+  if (
+    !canvasHelpElement ||
+    hasInteractedWithPhoto
+  ) {
+    return;
+  }
+
+
+  clearCanvasHelpTimers();
+
+
+  canvasHelpElement.classList.remove(
+    "is-hiding"
+  );
+
+  canvasHelpElement.hidden =
+    false;
+
+  canvasHelpElement.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+
+  canvasHelpTimer =
+    window.setTimeout(
+      () => {
+
+        hideCanvasHelp();
+
+      },
+      CANVAS_HELP_DURATION
+    );
+}
+
+
+/* =========================================================
+   ESTADO CARGANDO MARCO
+========================================================= */
+
+function setFrameLoading(
+  loading: boolean
+): void {
+
+  isApplyingFrame =
+    loading;
+
+
+  if (frameLoadingElement) {
+
+    frameLoadingElement.hidden =
+      !loading;
+
+    frameLoadingElement.setAttribute(
+      "aria-hidden",
+      String(
+        !loading
+      )
+    );
+
+  }
+
+
+  if (
+    loading &&
+    frameLoadingTextElement
+  ) {
+
+    frameLoadingTextElement.textContent =
+      "Aplicando marco...";
+
+  }
+
+
+  /*
+   * Mientras estamos aplicando el marco
+   * bloqueamos solamente los controles
+   * que podrían provocar otro cambio
+   * simultáneo.
+   */
+  for (
+    const option
+    of frameOptions
+  ) {
+
+    option.disabled =
+      loading;
+
+  }
+
+
+  framesPrev.disabled =
+    loading;
+
+  framesNext.disabled =
+    loading;
+
+  resetButton.disabled =
+    loading;
+
+  zoomInput.disabled =
+    loading;
+}
+
+
+/* =========================================================
+   ESTADO DE DESCARGA
+========================================================= */
+
+function setDownloadLoading(
+  loading: boolean
+): void {
+
+  isDownloading =
+    loading;
+
+
+  downloadButton.disabled =
+    loading ||
+    !currentImage;
+
+
+  downloadButton.classList.toggle(
+    "is-loading",
+    loading
+  );
+
+
+  if (downloadSpinnerElement) {
+
+    downloadSpinnerElement.hidden =
+      !loading;
+
+  }
+
+
+  if (downloadTextElement) {
+
+    downloadTextElement.textContent =
+      loading
+        ? "Preparando imagen..."
+        : "Descargar imagen";
+
+  }
+
+
+  downloadButton.setAttribute(
+    "aria-busy",
+    String(
+      loading
+    )
+  );
 }
 
 
@@ -513,15 +1025,9 @@ function calculateBaseScale(
 
 
   /*
-   * IMPORTANTE:
-   *
-   * Ya no calculamos la escala utilizando
-   * photoArea.
-   *
-   * Utilizamos fitArea para conseguir
-   * un encuadre inicial más abierto.
+   * fitArea determina el encuadre mínimo
+   * del usuario al 100%.
    */
-
   const scaleX =
     currentFitArea.width /
     image.naturalWidth;
@@ -615,16 +1121,9 @@ function constrainPosition(): void {
 
 
   /*
-   * Para el movimiento utilizamos FIT AREA.
-   *
-   * De esta manera el usuario puede desplazar
-   * la fotografía mientras la zona importante
-   * permanece siempre cubierta.
-   *
-   * PHOTO AREA continúa siendo únicamente
-   * nuestra máscara estricta.
+   * fitArea determina la zona que siempre
+   * debe permanecer cubierta.
    */
-
   const areaLeft =
     currentFitArea.x;
 
@@ -743,11 +1242,8 @@ function drawPhotoToContext(
 
 
   /*
-   * PHOTO AREA sigue siendo la máscara.
-   *
-   * Aunque el usuario mueva la fotografía,
-   * ningún pixel puede dibujarse fuera
-   * de esta zona.
+   * photoArea sigue siendo la máscara
+   * estricta.
    */
   targetContext.beginPath();
 
@@ -890,7 +1386,7 @@ function centerPhoto(): void {
 
 
 /* =========================================================
-   ACTUALIZAR UI DEL ZOOM
+   UI DEL ZOOM
 ========================================================= */
 
 function updateZoomUI(): void {
@@ -913,7 +1409,7 @@ function updateZoomUI(): void {
 
 
 /* =========================================================
-   RESET
+   RESTABLECER ENCUADRE
 ========================================================= */
 
 function resetTransform(): void {
@@ -951,6 +1447,12 @@ function validateImageFile(
   file: File
 ): string | null {
 
+  /*
+   * El accept del input es solamente una
+   * ayuda para el selector de archivos.
+   *
+   * Validamos nuevamente aquí.
+   */
   if (
     !ALLOWED_IMAGE_TYPES.has(
       file.type
@@ -1005,18 +1507,33 @@ function handleInvalidFile(
   );
 
 
+  setPhotoProcessing(
+    false
+  );
+
+
   input.value =
     "";
 
 
+  showPhotoError(
+    message
+  );
+
+
   /*
-   * Si ya existe una fotografía válida,
-   * conservamos su posibilidad de descarga.
+   * Si ya había una fotografía válida,
+   * la conservamos y permitimos descargarla.
    */
   if (!currentImage) {
 
     downloadButton.disabled =
       true;
+
+  } else {
+
+    downloadButton.disabled =
+      false;
 
   }
 
@@ -1024,7 +1541,9 @@ function handleInvalidFile(
   if (photoName) {
 
     photoName.textContent =
-      message;
+      currentImage
+        ? "La fotografía anterior continúa activa."
+        : "Ninguna fotografía seleccionada";
 
   }
 }
@@ -1047,6 +1566,9 @@ input.addEventListener(
     }
 
 
+    clearPhotoError();
+
+
     const validationError =
       validateImageFile(
         file
@@ -1062,6 +1584,16 @@ input.addEventListener(
 
       return;
     }
+
+
+    /*
+     * Mostramos el spinner únicamente
+     * durante la decodificación real
+     * de la fotografía.
+     */
+    setPhotoProcessing(
+      true
+    );
 
 
     const objectUrl =
@@ -1096,15 +1628,22 @@ input.addEventListener(
         }
 
 
+        /*
+         * La fotografía ya fue validada
+         * y decodificada.
+         */
         currentImage =
           image;
 
 
-        /*
-         * Ya existe una fotografía válida.
-         */
-        downloadButton.disabled =
-          false;
+        setPhotoProcessing(
+          false
+        );
+
+
+        setDownloadLoading(
+          false
+        );
 
 
         if (photoName) {
@@ -1129,6 +1668,17 @@ input.addEventListener(
         canvas.classList.add(
           "is-editable"
         );
+
+
+        /*
+         * Cada fotografía nueva puede volver
+         * a mostrar la indicación de arrastre.
+         */
+        hasInteractedWithPhoto =
+          false;
+
+
+        showCanvasHelp();
 
 
         URL.revokeObjectURL(
@@ -1165,7 +1715,10 @@ zoomInput.addEventListener(
   "input",
   () => {
 
-    if (!currentImage) {
+    if (
+      !currentImage ||
+      isApplyingFrame
+    ) {
       return;
     }
 
@@ -1270,9 +1823,24 @@ canvas.addEventListener(
   "pointerdown",
   (event) => {
 
-    if (!currentImage) {
+    if (
+      !currentImage ||
+      isApplyingFrame ||
+      isDownloading
+    ) {
       return;
     }
+
+
+    /*
+     * En cuanto el usuario descubre la
+     * interacción, retiramos la ayuda.
+     */
+    hasInteractedWithPhoto =
+      true;
+
+
+    hideCanvasHelp();
 
 
     isDragging =
@@ -1288,8 +1856,8 @@ canvas.addEventListener(
     } catch {
 
       /*
-       * El editor puede seguir funcionando
-       * sin pointer capture.
+       * El editor puede continuar aunque
+       * pointer capture no esté disponible.
        */
 
     }
@@ -1332,7 +1900,9 @@ canvas.addEventListener(
 
     if (
       !isDragging ||
-      !currentImage
+      !currentImage ||
+      isApplyingFrame ||
+      isDownloading
     ) {
       return;
     }
@@ -1436,6 +2006,14 @@ resetButton.addEventListener(
   "click",
   () => {
 
+    if (
+      isApplyingFrame ||
+      isDownloading
+    ) {
+      return;
+    }
+
+
     resetTransform();
 
   }
@@ -1451,13 +2029,14 @@ function loadFrame(
 ): Promise<HTMLImageElement> {
 
   /*
-   * Solamente aceptamos marcos declarados
+   * Solamente permitimos rutas declaradas
    * explícitamente en frames.data.ts.
    */
   const allowedFrame =
     frames.some(
       (frame) =>
-        frame.src === src
+        frame.src ===
+        src
     );
 
 
@@ -1588,7 +2167,7 @@ function loadFrame(
 
 
 /* =========================================================
-   ACTUALIZAR UI DE MARCOS
+   UI DE MARCOS
 ========================================================= */
 
 function updateFrameSelectionUI(
@@ -1669,10 +2248,10 @@ function applyFrameAreas(
 
 
   /*
-   * Conservamos el zoom seleccionado.
+   * Conservamos el zoom actual.
    *
-   * La escala base cambia porque cada
-   * marco puede tener un fitArea diferente.
+   * Cada marco puede tener un fitArea
+   * distinto.
    */
   updateScaleForCurrentArea(
     true
@@ -1687,7 +2266,7 @@ function applyFrameAreas(
    SIN MARCO
 ========================================================= */
 
-function selectNoFrame(): void {
+function applyNoFrame(): void {
 
   currentFrame =
     null;
@@ -1699,23 +2278,6 @@ function selectNoFrame(): void {
   applyFrameAreas(
     "none"
   );
-
-
-  const noneOption =
-    frameOptions.find(
-      (option) =>
-        option.dataset.frameId ===
-        "none"
-    );
-
-
-  if (noneOption) {
-
-    updateFrameSelectionUI(
-      noneOption
-    );
-
-  }
 
 
   draw();
@@ -1731,6 +2293,18 @@ async function selectFrame(
     HTMLButtonElement
 ): Promise<void> {
 
+  /*
+   * Durante la carga real bloqueamos las
+   * opciones, pero conservamos además esta
+   * comprobación defensiva.
+   */
+  if (
+    isApplyingFrame
+  ) {
+    return;
+  }
+
+
   const frameId =
     option.dataset.frameId ??
     "none";
@@ -1741,10 +2315,34 @@ async function selectFrame(
     "";
 
 
+  /*
+   * Si el usuario vuelve a presionar el
+   * mismo marco no necesitamos volver
+   * a procesarlo.
+   */
+  if (
+    frameId ===
+    currentFrameId
+  ) {
+
+    centerFrameOption(
+      option
+    );
+
+
+    return;
+  }
+
+
   const selectionToken =
     ++frameSelectionToken;
 
 
+  /*
+   * Marcamos visualmente la opción desde
+   * el inicio para que el clic tenga
+   * respuesta inmediata.
+   */
   updateFrameSelectionUI(
     option
   );
@@ -1757,25 +2355,15 @@ async function selectFrame(
 
   /*
    * SIN MARCO
+   *
+   * No necesitamos cargar ningún PNG.
    */
   if (
     frameId === "none" ||
     frameSrc === ""
   ) {
 
-    currentFrame =
-      null;
-
-    currentFrameId =
-      "none";
-
-
-    applyFrameAreas(
-      "none"
-    );
-
-
-    draw();
+    applyNoFrame();
 
 
     return;
@@ -1783,14 +2371,16 @@ async function selectFrame(
 
 
   /*
-   * ID y SRC deben coincidir exactamente
-   * con uno de nuestros marcos conocidos.
+   * ID y ruta deben coincidir exactamente
+   * con frames.data.ts.
    */
   const frameConfiguration =
     frames.find(
       (frame) =>
-        frame.id === frameId &&
-        frame.src === frameSrc
+        frame.id ===
+          frameId &&
+        frame.src ===
+          frameSrc
     );
 
 
@@ -1801,11 +2391,51 @@ async function selectFrame(
     );
 
 
-    selectNoFrame();
+    const noneOption =
+      frameOptions.find(
+        (item) =>
+          item.dataset.frameId ===
+          "none"
+      );
+
+
+    if (noneOption) {
+
+      updateFrameSelectionUI(
+        noneOption
+      );
+
+    }
+
+
+    applyNoFrame();
 
 
     return;
   }
+
+
+  /*
+   * Registramos el instante para garantizar
+   * el mínimo visual del spinner.
+   */
+  const loadingStartedAt =
+    performance.now();
+
+
+  setFrameLoading(
+    true
+  );
+
+
+  /*
+   * Mientras aplicamos el marco quitamos
+   * la ayuda flotante para no superponer
+   * dos mensajes.
+   */
+  hideCanvasHelp(
+    true
+  );
 
 
   try {
@@ -1814,6 +2444,47 @@ async function selectFrame(
       await loadFrame(
         frameSrc
       );
+
+
+    /*
+     * Aunque normalmente bloqueamos las
+     * opciones, mantenemos la protección
+     * contra condiciones de carrera.
+     */
+    if (
+      selectionToken !==
+      frameSelectionToken
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+     * Si el marco estaba en caché, esperamos
+     * solamente el tiempo restante necesario
+     * para llegar a 300 ms.
+     */
+    const elapsed =
+      performance.now() -
+      loadingStartedAt;
+
+
+    const remaining =
+      MIN_FRAME_LOADING_TIME -
+      elapsed;
+
+
+    if (
+      remaining > 0
+    ) {
+
+      await wait(
+        remaining
+      );
+
+    }
 
 
     if (
@@ -1858,7 +2529,41 @@ async function selectFrame(
     );
 
 
-    selectNoFrame();
+    const noneOption =
+      frameOptions.find(
+        (item) =>
+          item.dataset.frameId ===
+          "none"
+      );
+
+
+    if (noneOption) {
+
+      updateFrameSelectionUI(
+        noneOption
+      );
+
+    }
+
+
+    applyNoFrame();
+
+  } finally {
+
+    /*
+     * Solamente la selección vigente puede
+     * retirar el estado de carga.
+     */
+    if (
+      selectionToken ===
+      frameSelectionToken
+    ) {
+
+      setFrameLoading(
+        false
+      );
+
+    }
   }
 }
 
@@ -1903,6 +2608,11 @@ framesPrev.addEventListener(
   "click",
   () => {
 
+    if (isApplyingFrame) {
+      return;
+    }
+
+
     frameSelector.scrollBy({
       left:
         -getCarouselScrollAmount(),
@@ -1919,6 +2629,11 @@ framesNext.addEventListener(
   "click",
   () => {
 
+    if (isApplyingFrame) {
+      return;
+    }
+
+
     frameSelector.scrollBy({
       left:
         getCarouselScrollAmount(),
@@ -1932,7 +2647,7 @@ framesNext.addEventListener(
 
 
 /* =========================================================
-   CREAR CANVAS DE EXPORTACIÓN
+   CANVAS DE EXPORTACIÓN
 ========================================================= */
 
 function createExportCanvas():
@@ -1943,6 +2658,13 @@ function createExportCanvas():
   }
 
 
+  /*
+   * La exportación se realiza en un canvas
+   * independiente.
+   *
+   * Los overlays, spinner y mensajes de la
+   * interfaz NO forman parte del PNG.
+   */
   const exportCanvas =
     document.createElement(
       "canvas"
@@ -1984,11 +2706,6 @@ function createExportCanvas():
   );
 
 
-  /*
-   * La misma función que utiliza el preview
-   * garantiza que la exportación respete
-   * exactamente el encuadre del usuario.
-   */
   drawPhotoToContext(
     exportContext
   );
@@ -2105,6 +2822,11 @@ function downloadBlob(
   link.remove();
 
 
+  /*
+   * Esperamos antes de revocar la URL
+   * para mantener compatibilidad entre
+   * navegadores.
+   */
   window.setTimeout(
     () => {
 
@@ -2119,39 +2841,55 @@ function downloadBlob(
 
 
 /* =========================================================
-   DESCARGAR
+   DESCARGAR IMAGEN
 ========================================================= */
 
 downloadButton.addEventListener(
   "click",
   async () => {
 
-    if (!currentImage) {
-
-      console.warn(
-        "No hay ninguna fotografía para descargar."
-      );
-
-
-      downloadButton.disabled =
-        true;
-
-
-      return;
-    }
-
-
     if (
-      downloadButton.disabled
+      !currentImage ||
+      isDownloading ||
+      isApplyingFrame
     ) {
-
       return;
-
     }
 
 
-    downloadButton.disabled =
-      true;
+    /*
+     * El spinner del botón comienza
+     * inmediatamente después del clic.
+     */
+    setDownloadLoading(
+      true
+    );
+
+
+    /*
+     * Permitimos al navegador pintar el
+     * spinner antes de iniciar el trabajo
+     * de exportación.
+     */
+    await new Promise<void>(
+      (resolve) => {
+
+        requestAnimationFrame(
+          () => {
+
+            requestAnimationFrame(
+              () => {
+
+                resolve();
+
+              }
+            );
+
+          }
+        );
+
+      }
+    );
 
 
     try {
@@ -2230,8 +2968,9 @@ downloadButton.addEventListener(
 
     } finally {
 
-      downloadButton.disabled =
-        false;
+      setDownloadLoading(
+        false
+      );
 
     }
   }
@@ -2245,6 +2984,29 @@ downloadButton.addEventListener(
 updateAreasForFrame(
   "none"
 );
+
+
+setFrameLoading(
+  false
+);
+
+
+setDownloadLoading(
+  false
+);
+
+
+setPhotoProcessing(
+  false
+);
+
+
+hideCanvasHelp(
+  true
+);
+
+
+clearPhotoError();
 
 
 drawPlaceholder();
