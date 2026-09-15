@@ -1135,6 +1135,405 @@
 
 
 /* =========================================================
+   NAME SECTION
+========================================================= */
+
+.photo-editor__name-section {
+  width: 100%;
+
+  padding-top: 1.5rem;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+}
+
+
+/* =========================================================
+   NAME HEADER
+========================================================= */
+
+.photo-editor__name-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 1.5rem;
+}
+
+.photo-editor__name-heading {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   NAME EYEBROW
+========================================================= */
+
+.photo-editor__name-eyebrow {
+  display: block;
+
+  margin-bottom: 0.3rem;
+
+  color: #f5a623;
+
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+
+/* =========================================================
+   NAME TITLE
+========================================================= */
+
+.photo-editor__name-title {
+  margin: 0;
+
+  color: #fff;
+
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   SWITCH
+========================================================= */
+
+.photo-editor__switch {
+  position: relative;
+
+  display: flex;
+  flex: 0 0 auto;
+
+  align-items: center;
+
+  gap: 0.6rem;
+
+  cursor: pointer;
+
+  user-select: none;
+}
+
+
+/* =========================================================
+   SWITCH INPUT
+========================================================= */
+
+.photo-editor__switch-input {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+
+  clip: rect(0, 0, 0, 0);
+
+  white-space: nowrap;
+
+  border: 0;
+}
+
+
+/* =========================================================
+   SWITCH CONTROL
+========================================================= */
+
+.photo-editor__switch-control {
+  position: relative;
+
+  display: block;
+
+  width: 46px;
+  height: 26px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.2);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+
+/* =========================================================
+   SWITCH CIRCLE
+========================================================= */
+
+.photo-editor__switch-control::after {
+  content: "";
+
+  position: absolute;
+
+  top: 3px;
+  left: 3px;
+
+  width: 18px;
+  height: 18px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.78);
+
+  box-shadow:
+    0 2px 5px
+    rgba(0, 0, 0, 0.3);
+
+  transition:
+    transform 0.25s ease,
+    background-color 0.25s ease;
+}
+
+
+/* =========================================================
+   SWITCH ACTIVE
+========================================================= */
+
+.photo-editor__switch-input:checked +
+.photo-editor__switch-control {
+  border-color: #f5a623;
+
+  background: #e96c1f;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(245, 166, 35, 0.08);
+}
+
+.photo-editor__switch-input:checked +
+.photo-editor__switch-control::after {
+  transform:
+    translateX(20px);
+
+  background: #fff;
+}
+
+
+/* =========================================================
+   SWITCH FOCUS
+========================================================= */
+
+.photo-editor__switch-input:focus-visible +
+.photo-editor__switch-control {
+  outline:
+    2px solid
+    #f5a623;
+
+  outline-offset:
+    3px;
+}
+
+
+/* =========================================================
+   SWITCH LABEL
+========================================================= */
+
+.photo-editor__switch-label {
+  color:
+    rgba(255, 255, 255, 0.6);
+
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  transition:
+    color 0.2s ease;
+}
+
+.photo-editor__switch-input:checked ~
+.photo-editor__switch-label {
+  color: #f5a623;
+}
+
+
+/* =========================================================
+   NAME CONTROLS
+========================================================= */
+
+.photo-editor__name-controls {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.65rem;
+
+  margin-top: 1.25rem;
+
+  padding: 1rem;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.1);
+
+  border-radius: 0.8rem;
+
+  background:
+    rgba(255, 255, 255, 0.035);
+}
+
+.photo-editor__name-controls[hidden] {
+  display: none;
+}
+
+
+/* =========================================================
+   NAME LABEL
+========================================================= */
+
+.photo-editor__name-label {
+  color:
+    rgba(255, 255, 255, 0.82);
+
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   NAME INPUT
+========================================================= */
+
+.photo-editor__name-input {
+  width: 100%;
+
+  min-height: 3.2rem;
+
+  padding:
+    0.75rem
+    1rem;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.16);
+
+  border-radius: 0.65rem;
+
+  outline: none;
+
+  background:
+    rgba(0, 0, 0, 0.16);
+
+  color: #fff;
+
+  font: inherit;
+  font-size: 0.95rem;
+
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.photo-editor__name-input::placeholder {
+  color:
+    rgba(255, 255, 255, 0.3);
+}
+
+
+/* =========================================================
+   NAME INPUT HOVER
+========================================================= */
+
+.photo-editor__name-input:hover:not(:disabled) {
+  border-color:
+    rgba(255, 255, 255, 0.28);
+}
+
+
+/* =========================================================
+   NAME INPUT FOCUS
+========================================================= */
+
+.photo-editor__name-input:focus {
+  border-color: #f5a623;
+
+  background:
+    rgba(245, 166, 35, 0.035);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(245, 166, 35, 0.08);
+}
+
+
+/* =========================================================
+   NAME INPUT DISABLED
+========================================================= */
+
+.photo-editor__name-input:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.45;
+}
+
+
+/* =========================================================
+   NAME INFO
+========================================================= */
+
+.photo-editor__name-info {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 1rem;
+
+  color:
+    rgba(255, 255, 255, 0.42);
+
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.photo-editor__name-info > span:first-child {
+  flex: 1 1 auto;
+}
+
+
+/* =========================================================
+   NAME COUNTER
+========================================================= */
+
+.photo-editor__name-counter {
+  flex: 0 0 auto;
+
+  color:
+    rgba(255, 255, 255, 0.52);
+
+  font-variant-numeric:
+    tabular-nums;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   NAME COUNTER LIMIT
+========================================================= */
+
+.photo-editor__name-counter.is-limit {
+  color: #f5a623;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
    DOWNLOAD
 ========================================================= */
 
@@ -1575,6 +1974,31 @@
 
     height:
       55px;
+  }
+
+
+  /* NAME */
+
+  .photo-editor__name-header {
+    gap: 1rem;
+  }
+
+  .photo-editor__name-controls {
+    margin-top: 1rem;
+
+    padding: 0.85rem;
+  }
+
+  .photo-editor__name-info {
+    gap: 0.65rem;
+  }
+
+  .photo-editor__switch {
+    gap: 0.45rem;
+  }
+
+  .photo-editor__switch-label {
+    font-size: 0.72rem;
   }
 
 

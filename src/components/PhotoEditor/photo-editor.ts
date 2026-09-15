@@ -25,13 +25,60 @@ const ALLOWED_IMAGE_TYPES =
   ]);
 
 
+/* =========================================================
+   CONFIGURACIÓN DE LA PLACA
+========================================================= */
+
+const NAMEPLATE_SRC =
+  "/nameplates/placa.png";
+
+const NAME_MAX_LENGTH =
+  35;
+
+
+/*
+ * Tamaño máximo y mínimo del texto
+ * dentro de la placa.
+ */
+const NAME_FONT_MAX_SIZE =
+  54;
+
+const NAME_FONT_MIN_SIZE =
+  28;
+
+
+/*
+ * Posición inicial de la placa.
+ *
+ * Posteriormente podremos moverla
+ * individualmente según cada marco.
+ */
+const NAMEPLATE_CENTER_X =
+  540;
+
+const NAMEPLATE_CENTER_Y =
+  1260;
+
+
+/*
+ * Ancho máximo que ocupará la placa
+ * dentro del canvas 1080 × 1350.
+ */
+const NAMEPLATE_MAX_WIDTH =
+  720;
+
+
+/*
+ * Porcentaje del ancho interno de la
+ * placa que puede ocupar el texto.
+ */
+const NAME_TEXT_WIDTH_RATIO =
+  0.72;
+
+
 /*
  * Tiempo mínimo que mostramos el estado
  * "Aplicando marco...".
- *
- * Evita que el spinner aparezca y desaparezca
- * en un solo frame cuando el PNG ya está
- * almacenado en caché.
  */
 const MIN_FRAME_LOADING_TIME =
   300;
@@ -114,7 +161,32 @@ const downloadButtonElement =
 
 
 /* =========================================================
-   NUEVOS ELEMENTOS DE ESTADO
+   ELEMENTOS DEL NOMBRE
+========================================================= */
+
+const showNameElement =
+  document.querySelector<HTMLInputElement>(
+    "#showName"
+  );
+
+const nameControlsElement =
+  document.querySelector<HTMLElement>(
+    "#nameControls"
+  );
+
+const photoNameTextElement =
+  document.querySelector<HTMLInputElement>(
+    "#photoNameText"
+  );
+
+const nameCounterElement =
+  document.querySelector<HTMLElement>(
+    "#nameCounter"
+  );
+
+
+/* =========================================================
+   ELEMENTOS DE ESTADO
 ========================================================= */
 
 const canvasHelpElement =
@@ -185,7 +257,11 @@ if (
   !frameSelectorElement ||
   !framesPrevElement ||
   !framesNextElement ||
-  !downloadButtonElement
+  !downloadButtonElement ||
+  !showNameElement ||
+  !nameControlsElement ||
+  !photoNameTextElement ||
+  !nameCounterElement
 ) {
   throw new Error(
     "No se pudieron encontrar los elementos obligatorios del editor."
@@ -236,6 +312,18 @@ const framesNext =
 
 const downloadButton =
   downloadButtonElement;
+
+const showName =
+  showNameElement;
+
+const nameControls =
+  nameControlsElement;
+
+const photoNameText =
+  photoNameTextElement;
+
+const nameCounter =
+  nameCounterElement;
 
 const photoName =
   photoNameElement;
@@ -324,26 +412,44 @@ let currentFrameId =
   "none";
 
 
-/*
- * Máscara estricta.
- *
- * Ningún píxel de la fotografía puede
- * dibujarse fuera de esta zona.
- */
 let currentPhotoArea:
   PhotoArea = {
     ...FULL_CANVAS_AREA,
   };
 
 
-/*
- * Área utilizada para calcular el
- * encuadre mínimo al 100%.
- */
 let currentFitArea:
   PhotoArea = {
     ...FULL_CANVAS_AREA,
   };
+
+
+/* =========================================================
+   ESTADO DE LA PLACA
+========================================================= */
+
+let showNamePlate =
+  false;
+
+let namePlateText =
+  "";
+
+
+/*
+ * Imagen de la placa cargada en memoria.
+ */
+let namePlateImage:
+  HTMLImageElement | null =
+  null;
+
+
+/*
+ * Promesa compartida para evitar cargar
+ * varias veces el mismo PNG.
+ */
+let namePlatePromise:
+  Promise<HTMLImageElement> | null =
+  null;
 
 
 /* =========================================================
@@ -357,10 +463,6 @@ const frameCache =
   >();
 
 
-/*
- * Evita condiciones de carrera si el usuario
- * cambia rápidamente entre marcos.
- */
 let frameSelectionToken =
   0;
 
@@ -396,11 +498,6 @@ let isDownloading =
   false;
 
 
-/*
- * Guardamos el temporizador para poder
- * cancelarlo si mostramos nuevamente
- * la ayuda.
- */
 let canvasHelpTimer:
   number | null =
   null;
@@ -410,11 +507,6 @@ let canvasHelpHideTimer:
   null;
 
 
-/*
- * Una vez que el usuario interactúa con
- * la fotografía ya no necesitamos mostrar
- * repetidamente la ayuda.
- */
 let hasInteractedWithPhoto =
   false;
 
@@ -878,12 +970,6 @@ function setFrameLoading(
   }
 
 
-  /*
-   * Mientras estamos aplicando el marco
-   * bloqueamos solamente los controles
-   * que podrían provocar otro cambio
-   * simultáneo.
-   */
   for (
     const option
     of frameOptions
@@ -1024,10 +1110,6 @@ function calculateBaseScale(
   }
 
 
-  /*
-   * fitArea determina el encuadre mínimo
-   * del usuario al 100%.
-   */
   const scaleX =
     currentFitArea.width /
     image.naturalWidth;
@@ -1120,10 +1202,6 @@ function constrainPosition(): void {
     getImageDimensions();
 
 
-  /*
-   * fitArea determina la zona que siempre
-   * debe permanecer cubierta.
-   */
   const areaLeft =
     currentFitArea.x;
 
@@ -1241,10 +1319,6 @@ function drawPhotoToContext(
   targetContext.save();
 
 
-  /*
-   * photoArea sigue siendo la máscara
-   * estricta.
-   */
   targetContext.beginPath();
 
 
@@ -1297,6 +1371,325 @@ function drawFrameToContext(
 
 
 /* =========================================================
+   CARGAR PLACA
+========================================================= */
+
+function loadNamePlate():
+  Promise<HTMLImageElement> {
+
+  if (
+    namePlateImage &&
+    namePlateImage.complete &&
+    namePlateImage.naturalWidth > 0
+  ) {
+
+    return Promise.resolve(
+      namePlateImage
+    );
+
+  }
+
+
+  if (namePlatePromise) {
+
+    return namePlatePromise;
+
+  }
+
+
+  namePlatePromise =
+    new Promise(
+      (
+        resolve,
+        reject
+      ) => {
+
+        const image =
+          new Image();
+
+
+        image.onload =
+          () => {
+
+            if (
+              image.naturalWidth <= 0 ||
+              image.naturalHeight <= 0
+            ) {
+
+              namePlatePromise =
+                null;
+
+
+              reject(
+                new Error(
+                  "La imagen de la placa no es válida."
+                )
+              );
+
+
+              return;
+            }
+
+
+            namePlateImage =
+              image;
+
+
+            resolve(
+              image
+            );
+          };
+
+
+        image.onerror =
+          () => {
+
+            namePlatePromise =
+              null;
+
+
+            reject(
+              new Error(
+                `No se pudo cargar la placa: ${NAMEPLATE_SRC}`
+              )
+            );
+          };
+
+
+        image.src =
+          NAMEPLATE_SRC;
+      }
+    );
+
+
+  return namePlatePromise;
+}
+
+
+/* =========================================================
+   DIMENSIONES DE LA PLACA
+========================================================= */
+
+function getNamePlateDimensions(): {
+  width: number;
+  height: number;
+} {
+
+  if (
+    !namePlateImage ||
+    namePlateImage.naturalWidth <= 0 ||
+    namePlateImage.naturalHeight <= 0
+  ) {
+
+    return {
+      width: 0,
+      height: 0,
+    };
+
+  }
+
+
+  const width =
+    Math.min(
+      NAMEPLATE_MAX_WIDTH,
+      canvas.width - 100
+    );
+
+
+  const aspectRatio =
+    namePlateImage.naturalHeight /
+    namePlateImage.naturalWidth;
+
+
+  return {
+    width,
+
+    height:
+      width *
+      aspectRatio,
+  };
+}
+
+
+/* =========================================================
+   AJUSTAR TAMAÑO DEL NOMBRE
+========================================================= */
+
+function getNameFontSize(
+  targetContext:
+    CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): number {
+
+  let fontSize =
+    NAME_FONT_MAX_SIZE;
+
+
+  while (
+    fontSize >
+    NAME_FONT_MIN_SIZE
+  ) {
+
+    targetContext.font =
+      `700 ${fontSize}px Arial, Helvetica, sans-serif`;
+
+
+    const width =
+      targetContext.measureText(
+        text
+      ).width;
+
+
+    if (
+      width <=
+      maxWidth
+    ) {
+
+      return fontSize;
+
+    }
+
+
+    fontSize -=
+      2;
+  }
+
+
+  return NAME_FONT_MIN_SIZE;
+}
+
+
+/* =========================================================
+   DIBUJAR PLACA Y NOMBRE
+========================================================= */
+
+function drawNamePlateToContext(
+  targetContext:
+    CanvasRenderingContext2D
+): void {
+
+  if (
+    !showNamePlate ||
+    !namePlateImage
+  ) {
+    return;
+  }
+
+
+  const {
+    width,
+    height,
+  } =
+    getNamePlateDimensions();
+
+
+  if (
+    width <= 0 ||
+    height <= 0
+  ) {
+    return;
+  }
+
+
+  const x =
+    NAMEPLATE_CENTER_X -
+    width / 2;
+
+
+  const y =
+    NAMEPLATE_CENTER_Y -
+    height / 2;
+
+
+  targetContext.save();
+
+
+  /*
+   * Primero dibujamos la imagen PNG
+   * transparente de la placa.
+   */
+  targetContext.drawImage(
+    namePlateImage,
+    x,
+    y,
+    width,
+    height
+  );
+
+
+  const text =
+    namePlateText.trim();
+
+
+  /*
+   * La placa puede mostrarse aunque el
+   * usuario todavía no haya escrito nada.
+   */
+  if (
+    text.length > 0
+  ) {
+
+    const textMaxWidth =
+      width *
+      NAME_TEXT_WIDTH_RATIO;
+
+
+    const fontSize =
+      getNameFontSize(
+        targetContext,
+        text,
+        textMaxWidth
+      );
+
+
+    targetContext.font =
+      `700 ${fontSize}px Arial, Helvetica, sans-serif`;
+
+
+    targetContext.textAlign =
+      "center";
+
+    targetContext.textBaseline =
+      "middle";
+
+
+    /*
+     * Sombra ligera para conservar la
+     * legibilidad sobre la placa.
+     */
+    targetContext.shadowColor =
+      "rgba(0, 0, 0, 0.45)";
+
+    targetContext.shadowBlur =
+      4;
+
+    targetContext.shadowOffsetX =
+      0;
+
+    targetContext.shadowOffsetY =
+      2;
+
+
+    targetContext.fillStyle =
+      "#ffffff";
+
+
+    targetContext.fillText(
+      text,
+      NAMEPLATE_CENTER_X,
+      NAMEPLATE_CENTER_Y,
+      textMaxWidth
+    );
+
+  }
+
+
+  targetContext.restore();
+}
+
+
+/* =========================================================
    RENDER PRINCIPAL
 ========================================================= */
 
@@ -1319,12 +1712,25 @@ function draw(): void {
   );
 
 
+  /*
+   * Orden de capas:
+   *
+   * 1. Fotografía
+   * 2. Marco
+   * 3. Placa
+   * 4. Nombre
+   */
   drawPhotoToContext(
     ctx
   );
 
 
   drawFrameToContext(
+    ctx
+  );
+
+
+  drawNamePlateToContext(
     ctx
   );
 }
@@ -1447,12 +1853,6 @@ function validateImageFile(
   file: File
 ): string | null {
 
-  /*
-   * El accept del input es solamente una
-   * ayuda para el selector de archivos.
-   *
-   * Validamos nuevamente aquí.
-   */
   if (
     !ALLOWED_IMAGE_TYPES.has(
       file.type
@@ -1521,10 +1921,6 @@ function handleInvalidFile(
   );
 
 
-  /*
-   * Si ya había una fotografía válida,
-   * la conservamos y permitimos descargarla.
-   */
   if (!currentImage) {
 
     downloadButton.disabled =
@@ -1586,11 +1982,6 @@ input.addEventListener(
     }
 
 
-    /*
-     * Mostramos el spinner únicamente
-     * durante la decodificación real
-     * de la fotografía.
-     */
     setPhotoProcessing(
       true
     );
@@ -1628,10 +2019,6 @@ input.addEventListener(
         }
 
 
-        /*
-         * La fotografía ya fue validada
-         * y decodificada.
-         */
         currentImage =
           image;
 
@@ -1670,10 +2057,6 @@ input.addEventListener(
         );
 
 
-        /*
-         * Cada fotografía nueva puede volver
-         * a mostrar la indicación de arrastre.
-         */
         hasInteractedWithPhoto =
           false;
 
@@ -1832,10 +2215,6 @@ canvas.addEventListener(
     }
 
 
-    /*
-     * En cuanto el usuario descubre la
-     * interacción, retiramos la ayuda.
-     */
     hasInteractedWithPhoto =
       true;
 
@@ -1855,10 +2234,7 @@ canvas.addEventListener(
 
     } catch {
 
-      /*
-       * El editor puede continuar aunque
-       * pointer capture no esté disponible.
-       */
+      /* El editor puede continuar. */
 
     }
 
@@ -1968,10 +2344,7 @@ function stopDragging(
 
   } catch {
 
-    /*
-     * El navegador pudo liberar
-     * previamente el pointer.
-     */
+    /* El navegador pudo liberarlo antes. */
 
   }
 
@@ -2028,10 +2401,6 @@ function loadFrame(
   src: string
 ): Promise<HTMLImageElement> {
 
-  /*
-   * Solamente permitimos rutas declaradas
-   * explícitamente en frames.data.ts.
-   */
   const allowedFrame =
     frames.some(
       (frame) =>
@@ -2247,12 +2616,6 @@ function applyFrameAreas(
   }
 
 
-  /*
-   * Conservamos el zoom actual.
-   *
-   * Cada marco puede tener un fitArea
-   * distinto.
-   */
   updateScaleForCurrentArea(
     true
   );
@@ -2293,11 +2656,6 @@ async function selectFrame(
     HTMLButtonElement
 ): Promise<void> {
 
-  /*
-   * Durante la carga real bloqueamos las
-   * opciones, pero conservamos además esta
-   * comprobación defensiva.
-   */
   if (
     isApplyingFrame
   ) {
@@ -2315,11 +2673,6 @@ async function selectFrame(
     "";
 
 
-  /*
-   * Si el usuario vuelve a presionar el
-   * mismo marco no necesitamos volver
-   * a procesarlo.
-   */
   if (
     frameId ===
     currentFrameId
@@ -2338,11 +2691,6 @@ async function selectFrame(
     ++frameSelectionToken;
 
 
-  /*
-   * Marcamos visualmente la opción desde
-   * el inicio para que el clic tenga
-   * respuesta inmediata.
-   */
   updateFrameSelectionUI(
     option
   );
@@ -2353,11 +2701,6 @@ async function selectFrame(
   );
 
 
-  /*
-   * SIN MARCO
-   *
-   * No necesitamos cargar ningún PNG.
-   */
   if (
     frameId === "none" ||
     frameSrc === ""
@@ -2370,10 +2713,6 @@ async function selectFrame(
   }
 
 
-  /*
-   * ID y ruta deben coincidir exactamente
-   * con frames.data.ts.
-   */
   const frameConfiguration =
     frames.find(
       (frame) =>
@@ -2415,10 +2754,6 @@ async function selectFrame(
   }
 
 
-  /*
-   * Registramos el instante para garantizar
-   * el mínimo visual del spinner.
-   */
   const loadingStartedAt =
     performance.now();
 
@@ -2428,11 +2763,6 @@ async function selectFrame(
   );
 
 
-  /*
-   * Mientras aplicamos el marco quitamos
-   * la ayuda flotante para no superponer
-   * dos mensajes.
-   */
   hideCanvasHelp(
     true
   );
@@ -2446,11 +2776,6 @@ async function selectFrame(
       );
 
 
-    /*
-     * Aunque normalmente bloqueamos las
-     * opciones, mantenemos la protección
-     * contra condiciones de carrera.
-     */
     if (
       selectionToken !==
       frameSelectionToken
@@ -2461,11 +2786,6 @@ async function selectFrame(
     }
 
 
-    /*
-     * Si el marco estaba en caché, esperamos
-     * solamente el tiempo restante necesario
-     * para llegar a 300 ms.
-     */
     const elapsed =
       performance.now() -
       loadingStartedAt;
@@ -2550,10 +2870,6 @@ async function selectFrame(
 
   } finally {
 
-    /*
-     * Solamente la selección vigente puede
-     * retirar el estado de carga.
-     */
     if (
       selectionToken ===
       frameSelectionToken
@@ -2647,6 +2963,183 @@ framesNext.addEventListener(
 
 
 /* =========================================================
+   CONTADOR DEL NOMBRE
+========================================================= */
+
+function updateNameCounter(): void {
+
+  const length =
+    photoNameText.value.length;
+
+
+  nameCounter.textContent =
+    `${length} / ${NAME_MAX_LENGTH}`;
+
+
+  nameCounter.classList.toggle(
+    "is-limit",
+    length >=
+      NAME_MAX_LENGTH
+  );
+}
+
+
+/* =========================================================
+   ACTIVAR / DESACTIVAR NOMBRE
+========================================================= */
+
+showName.addEventListener(
+  "change",
+  async () => {
+
+    showNamePlate =
+      showName.checked;
+
+
+    showName.setAttribute(
+      "aria-expanded",
+      String(
+        showNamePlate
+      )
+    );
+
+
+    nameControls.hidden =
+      !showNamePlate;
+
+
+    photoNameText.disabled =
+      !showNamePlate;
+
+
+    /*
+     * Si se desactiva simplemente
+     * retiramos la placa del canvas.
+     *
+     * Conservamos el texto escrito por si
+     * el usuario vuelve a activarla.
+     */
+    if (!showNamePlate) {
+
+      draw();
+
+      return;
+    }
+
+
+    /*
+     * Mostramos inmediatamente los
+     * controles.
+     */
+    updateNameCounter();
+
+
+    try {
+
+      await loadNamePlate();
+
+
+      /*
+       * El usuario pudo apagar el switch
+       * mientras cargaba el PNG.
+       */
+      if (!showName.checked) {
+        return;
+      }
+
+
+      draw();
+
+
+      /*
+       * Llevamos el foco al campo para
+       * continuar naturalmente el flujo.
+       */
+      photoNameText.focus();
+
+    } catch (error) {
+
+      console.error(
+        "No se pudo cargar la placa del nombre:",
+        error
+      );
+
+
+      /*
+       * Si falla el asset restauramos
+       * el switch para no dejar una
+       * función aparentemente activa.
+       */
+      showNamePlate =
+        false;
+
+      showName.checked =
+        false;
+
+      showName.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+
+      nameControls.hidden =
+        true;
+
+      photoNameText.disabled =
+        true;
+    }
+  }
+);
+
+
+/* =========================================================
+   ESCRIBIR NOMBRE
+========================================================= */
+
+photoNameText.addEventListener(
+  "input",
+  () => {
+
+    /*
+     * maxlength ya limita desde HTML,
+     * pero volvemos a proteger el estado.
+     */
+    const value =
+      photoNameText.value.slice(
+        0,
+        NAME_MAX_LENGTH
+      );
+
+
+    if (
+      photoNameText.value !==
+      value
+    ) {
+
+      photoNameText.value =
+        value;
+
+    }
+
+
+    namePlateText =
+      value;
+
+
+    updateNameCounter();
+
+
+    if (
+      showNamePlate
+    ) {
+
+      draw();
+
+    }
+  }
+);
+
+
+/* =========================================================
    CANVAS DE EXPORTACIÓN
 ========================================================= */
 
@@ -2658,13 +3151,6 @@ function createExportCanvas():
   }
 
 
-  /*
-   * La exportación se realiza en un canvas
-   * independiente.
-   *
-   * Los overlays, spinner y mensajes de la
-   * interfaz NO forman parte del PNG.
-   */
   const exportCanvas =
     document.createElement(
       "canvas"
@@ -2706,6 +3192,9 @@ function createExportCanvas():
   );
 
 
+  /*
+   * Mismo orden que la previsualización.
+   */
   drawPhotoToContext(
     exportContext
   );
@@ -2722,6 +3211,11 @@ function createExportCanvas():
     );
 
   }
+
+
+  drawNamePlateToContext(
+    exportContext
+  );
 
 
   return exportCanvas;
@@ -2822,11 +3316,6 @@ function downloadBlob(
   link.remove();
 
 
-  /*
-   * Esperamos antes de revocar la URL
-   * para mantener compatibilidad entre
-   * navegadores.
-   */
   window.setTimeout(
     () => {
 
@@ -2857,20 +3346,11 @@ downloadButton.addEventListener(
     }
 
 
-    /*
-     * El spinner del botón comienza
-     * inmediatamente después del clic.
-     */
     setDownloadLoading(
       true
     );
 
 
-    /*
-     * Permitimos al navegador pintar el
-     * spinner antes de iniciar el trabajo
-     * de exportación.
-     */
     await new Promise<void>(
       (resolve) => {
 
@@ -2894,6 +3374,21 @@ downloadButton.addEventListener(
 
     try {
 
+      /*
+       * Si el nombre está activo nos
+       * aseguramos de que la placa esté
+       * cargada antes de exportar.
+       */
+      if (
+        showNamePlate &&
+        !namePlateImage
+      ) {
+
+        await loadNamePlate();
+
+      }
+
+
       const exportCanvas =
         createExportCanvas();
 
@@ -2907,10 +3402,6 @@ downloadButton.addEventListener(
       }
 
 
-      /*
-       * Debemos conservar exactamente
-       * 1080 × 1350.
-       */
       if (
         exportCanvas.width !==
           canvas.width ||
@@ -3007,6 +3498,49 @@ hideCanvasHelp(
 
 
 clearPhotoError();
+
+
+/*
+ * Estado inicial del nombre.
+ */
+showName.checked =
+  false;
+
+showNamePlate =
+  false;
+
+nameControls.hidden =
+  true;
+
+photoNameText.disabled =
+  true;
+
+photoNameText.maxLength =
+  NAME_MAX_LENGTH;
+
+namePlateText =
+  "";
+
+updateNameCounter();
+
+
+/*
+ * Precargamos la placa en segundo plano.
+ *
+ * No bloquea el editor y hace que la
+ * primera activación sea prácticamente
+ * inmediata.
+ */
+void loadNamePlate().catch(
+  (error) => {
+
+    console.warn(
+      "No se pudo precargar la placa:",
+      error
+    );
+
+  }
+);
 
 
 drawPlaceholder();

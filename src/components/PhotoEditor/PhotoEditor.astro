@@ -326,6 +326,83 @@ import { frames } from "./frames.data";
           </div>
 
           <!-- ===============================================
+               NOMBRE
+          ================================================ -->
+
+          <div class="photo-editor__name-section">
+            <!-- =============================================
+                 ENCABEZADO
+            ============================================== -->
+
+            <div class="photo-editor__name-header">
+              <div class="photo-editor__name-heading">
+                <span class="photo-editor__name-eyebrow">
+                  Personaliza aún más
+                </span>
+
+                <h2 class="photo-editor__name-title">Añade tu nombre</h2>
+              </div>
+
+              <!-- ===========================================
+                   SWITCH
+              ============================================ -->
+
+              <label class="photo-editor__switch">
+                <input
+                  id="showName"
+                  class="photo-editor__switch-input"
+                  type="checkbox"
+                  aria-controls="nameControls"
+                  aria-expanded="false"
+                />
+
+                <span class="photo-editor__switch-control" aria-hidden="true"
+                ></span>
+
+                <span class="photo-editor__switch-label"> Mostrar </span>
+              </label>
+            </div>
+
+            <!-- =============================================
+                 CONTROLES DEL NOMBRE
+            ============================================== -->
+
+            <div id="nameControls" class="photo-editor__name-controls" hidden>
+              <label class="photo-editor__name-label" for="photoNameText">
+                Escribe tu nombre
+              </label>
+
+              <input
+                id="photoNameText"
+                class="photo-editor__name-input"
+                type="text"
+                maxlength="35"
+                autocomplete="off"
+                placeholder="Ej. María Fernanda"
+                disabled
+              />
+
+              <!-- ===========================================
+                   INFORMACIÓN
+              ============================================ -->
+
+              <div class="photo-editor__name-info">
+                <span>
+                  El nombre aparecerá en una placa sobre tu retrato.
+                </span>
+
+                <span
+                  id="nameCounter"
+                  class="photo-editor__name-counter"
+                  aria-live="polite"
+                >
+                  0 / 35
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===============================================
                DESCARGA
           ================================================ -->
 
