@@ -1,46 +1,90 @@
-# Astro Starter Kit: Basics
+# 🎨 Editor de Fotos Día de Muertos
+
+Crea tu retrato personalizado de Día de Muertos directamente desde el navegador. Sube una fotografía, ajusta el encuadre, elige un marco temático y añade tu nombre en una placa — todo sin subir tu imagen a ningún servidor.
+
+**[Ver demo en vivo →](https://nayelipraso.github.io/dia-muertos-editor/)**
+
+## ✨ Características
+
+- **100% en el cliente**: la fotografía se procesa con `<canvas>` en el propio navegador; nunca se envía ni almacena en un servidor.
+- **Encuadre interactivo**: arrastra y haz zoom sobre tu fotografía para ajustarla dentro del marco.
+- **6 marcos temáticos** de Día de Muertos, seleccionables desde un carrusel.
+- **Placa de nombre opcional**: agrega tu nombre y se ajusta automáticamente al ancho disponible.
+- **Exportación a PNG** en alta resolución (1080 × 1350 px), lista para redes sociales.
+- **Accesible**: navegación por teclado, estados `aria-live` para carga y errores, foco visible.
+
+## 🛠️ Stack técnico
+
+- [Astro](https://astro.build) 7
+- TypeScript
+- Canvas API (sin librerías externas para el procesamiento de imagen)
+- pnpm como gestor de paquetes
+
+## 🚀 Empezando
+
+### Requisitos
+
+- Node.js `>=22.12.0`
+- pnpm `>=7.1.0`
+
+### Instalación
 
 ```sh
-pnpm create astro@latest -- --template basics
+pnpm install
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+### Desarrollo
 
-## 🚀 Project Structure
+```sh
+pnpm dev
+```
 
-Inside of your Astro project, you'll see the following folders and files:
+Abre [http://localhost:4321](http://localhost:4321) para ver el proyecto.
+
+### Build de producción
+
+```sh
+pnpm build
+pnpm preview
+```
+
+## 📁 Estructura del proyecto
 
 ```text
 /
 ├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+│   ├── frames/          # Marcos PNG (transparentes) usados en el editor
+│   └── nameplates/       # Placa PNG para el nombre
+├── src/
+│   ├── components/
+│   │   └── PhotoEditor/
+│   │       ├── PhotoEditor.astro   # Markup y controles del editor
+│   │       ├── photo-editor.ts     # Lógica de canvas, drag, zoom, export
+│   │       ├── photo-editor.css    # Estilos del editor
+│   │       └── frames.data.ts      # Configuración de cada marco (áreas de encuadre)
+│   ├── layouts/
+│   │   └── Layout.astro
+│   └── pages/
+│       └── index.astro
+└── astro.config.mjs
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+### Cómo agregar un nuevo marco
 
-## 🧞 Commands
+1. Coloca el PNG (transparente, 1080 × 1350 px) en `public/frames/`.
+2. Agrega una entrada en `src/components/PhotoEditor/frames.data.ts` con:
+   - `photoArea`: la zona donde la fotografía puede dibujarse (máscara estricta).
+   - `fitArea`: la zona usada para calcular el encuadre mínimo al 100 % (normalmente más pequeña que `photoArea`, para un encuadre más abierto).
+3. El nuevo marco aparecerá automáticamente en el carrusel de selección.
 
-All commands are run from the root of the project, from a terminal:
+## 🔒 Privacidad
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+Ninguna fotografía sale del dispositivo del usuario. Todo el procesamiento —encuadre, marco y exportación— ocurre en el navegador mediante la Canvas API.
 
-## 👀 Want to learn more?
+## 📄 Licencia
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+_Pendiente de definir._
+
+## 🙏 Créditos
+
+Diseño de marcos y placa:
