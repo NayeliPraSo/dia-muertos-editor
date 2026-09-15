@@ -32,7 +32,7 @@ export interface PhotoFrame {
    */
   fitArea: PhotoArea;
 }
-
+const BASE_URL = import.meta.env.BASE_URL;
 
 /* =========================================================
    MARCOS
@@ -50,7 +50,7 @@ export const frames: PhotoFrame[] = [
 
     name: "Marco 1",
 
-    src: "/frames/Marco-1.png",
+    src: `${BASE_URL}frames/Marco-1.png`,
 
     photoArea: {
       x: 70,
@@ -78,7 +78,7 @@ export const frames: PhotoFrame[] = [
 
     name: "Marco 2",
 
-    src: "/frames/Marco-2.png",
+    src: `${BASE_URL}frames/Marco-2.png`,
 
     photoArea: {
       x: 80,
@@ -106,7 +106,7 @@ export const frames: PhotoFrame[] = [
 
     name: "Marco 3",
 
-    src: "/frames/Marco-3.png",
+    src: `${BASE_URL}frames/Marco-3.png`,
 
     photoArea: {
       x: 85,
@@ -134,7 +134,7 @@ export const frames: PhotoFrame[] = [
 
     name: "Marco 4",
 
-    src: "/frames/Marco-4.png",
+    src: `${BASE_URL}frames/Marco-4.png`,
 
     photoArea: {
       x: 135,
@@ -162,7 +162,7 @@ export const frames: PhotoFrame[] = [
 
     name: "Marco 5",
 
-    src: "/frames/Marco-5.png",
+    src: `${BASE_URL}frames/Marco-5.png`,
 
     photoArea: {
       x: 115,
@@ -190,7 +190,7 @@ export const frames: PhotoFrame[] = [
 
     name: "Marco 6",
 
-    src: "/frames/Marco-6.png",
+    src: `${BASE_URL}frames/Marco-6.png`,
 
     photoArea: {
       x: 165,

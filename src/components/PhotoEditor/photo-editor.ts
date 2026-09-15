@@ -30,7 +30,7 @@ const ALLOWED_IMAGE_TYPES =
 ========================================================= */
 
 const NAMEPLATE_SRC =
-  "/nameplates/placa.png";
+  `${import.meta.env.BASE_URL}nameplates/placa.png`;
 
 const NAME_MAX_LENGTH =
   35;
