@@ -1,0 +1,1136 @@
+/* =========================================================
+   PHOTO EDITOR
+========================================================= */
+
+.photo-editor {
+  min-height: 100vh;
+  padding: 4rem 1.5rem;
+
+  background:
+    radial-gradient(
+      circle at top,
+      #482213 0%,
+      #241711 40%,
+      #110d0b 100%
+    );
+
+  color: #fff;
+}
+
+
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.photo-editor__container {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   INTRO
+========================================================= */
+
+.photo-editor__intro {
+  max-width: 720px;
+  margin-bottom: 3rem;
+}
+
+.photo-editor__eyebrow {
+  display: block;
+  margin-bottom: 0.8rem;
+
+  color: #f5a623;
+
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.photo-editor__title {
+  margin: 0 0 1rem;
+
+  font-size: clamp(
+    2.8rem,
+    6vw,
+    5rem
+  );
+
+  line-height: 0.95;
+}
+
+.photo-editor__description {
+  max-width: 620px;
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.72);
+
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   WORKSPACE
+========================================================= */
+
+.photo-editor__workspace {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 560px)
+    minmax(280px, 1fr);
+
+  gap: 3rem;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   PREVIEW
+========================================================= */
+
+.photo-editor__preview {
+  width: 100%;
+}
+
+
+/* =========================================================
+   CANVAS WRAPPER
+========================================================= */
+
+.photo-editor__canvas-wrapper {
+  width: 100%;
+
+  overflow: hidden;
+
+  border-radius: 1.5rem;
+
+  background: #1b1512;
+
+  box-shadow:
+    0 2rem 5rem
+    rgba(0, 0, 0, 0.35);
+}
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+.photo-editor__canvas {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  aspect-ratio: 4 / 5;
+
+  outline: none;
+}
+
+.photo-editor__canvas.is-editable {
+  cursor: grab;
+
+  touch-action: none;
+  user-select: none;
+}
+
+.photo-editor__canvas.is-dragging {
+  cursor: grabbing;
+}
+
+
+/* =========================================================
+   FOCUS DEL CANVAS
+========================================================= */
+
+.photo-editor__canvas:focus-visible {
+  outline: 3px solid #f5a623;
+  outline-offset: 5px;
+}
+
+
+/* =========================================================
+   CONTROLES
+========================================================= */
+
+.photo-editor__controls {
+  display: flex;
+  flex-direction: column;
+
+  gap: 1rem;
+
+  min-width: 0;
+}
+
+
+/* =========================================================
+   UPLOAD SECTION
+========================================================= */
+
+.photo-editor__upload-section {
+  display: flex;
+  flex-direction: column;
+
+  gap: 0.75rem;
+}
+
+
+/* =========================================================
+   UPLOAD
+========================================================= */
+
+.photo-editor__upload {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 3.5rem;
+
+  padding: 0.9rem 1.5rem;
+
+  border-radius: 999px;
+
+  background: #e96c1f;
+
+  color: #fff;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.photo-editor__upload:hover {
+  transform: translateY(-2px);
+
+  background: #f37a25;
+}
+
+.photo-editor__upload:focus-within {
+  outline: 3px solid #f5a623;
+  outline-offset: 3px;
+}
+
+.photo-editor__upload input {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+
+  border: 0;
+}
+
+
+/* =========================================================
+   REQUISITOS DE LA FOTOGRAFÍA
+========================================================= */
+
+.photo-editor__requirements {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.48);
+
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   FILE NAME
+========================================================= */
+
+.photo-editor__filename {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.65);
+
+  font-size: 0.9rem;
+  line-height: 1.4;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   ESTADO DE PROCESAMIENTO
+========================================================= */
+
+.photo-editor__status {
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.65rem;
+
+  min-height: 2.5rem;
+
+  padding: 0.7rem 0.9rem;
+
+  border:
+    1px solid
+    rgba(245, 166, 35, 0.18);
+
+  border-radius: 0.65rem;
+
+  background:
+    rgba(245, 166, 35, 0.06);
+
+  color: rgba(255, 255, 255, 0.8);
+
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.photo-editor__status[hidden] {
+  display: none;
+}
+
+
+/* =========================================================
+   SPINNER
+========================================================= */
+
+.photo-editor__status-spinner {
+  flex: 0 0 auto;
+
+  width: 16px;
+  height: 16px;
+
+  border:
+    2px solid
+    rgba(245, 166, 35, 0.25);
+
+  border-top-color: #f5a623;
+
+  border-radius: 50%;
+
+  animation:
+    photo-editor-spin
+    0.7s
+    linear
+    infinite;
+}
+
+@keyframes photo-editor-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.photo-editor__error {
+  margin: 0;
+
+  padding: 0.75rem 0.9rem;
+
+  border:
+    1px solid
+    rgba(255, 115, 115, 0.35);
+
+  border-radius: 0.65rem;
+
+  background:
+    rgba(170, 30, 30, 0.12);
+
+  color: #ffb3b3;
+
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.photo-editor__error[hidden] {
+  display: none;
+}
+
+
+/* =========================================================
+   CONTROLES DE EDICIÓN
+========================================================= */
+
+.photo-editor__editing-controls {
+  display: flex;
+  flex-direction: column;
+
+  gap: 1.5rem;
+
+  width: 100%;
+
+  margin-top: 0.5rem;
+  padding-top: 1.5rem;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+}
+
+.photo-editor__editing-controls[hidden] {
+  display: none;
+}
+
+
+/* =========================================================
+   CONTROL
+========================================================= */
+
+.photo-editor__control {
+  display: flex;
+  flex-direction: column;
+
+  gap: 0.75rem;
+}
+
+.photo-editor__control-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  font-size: 0.95rem;
+}
+
+.photo-editor__control-header label {
+  font-weight: 600;
+}
+
+#zoomValue {
+  color: #f5a623;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   RANGE / ZOOM
+========================================================= */
+
+.photo-editor__range {
+  width: 100%;
+
+  margin: 0;
+
+  cursor: pointer;
+
+  accent-color: #e96c1f;
+}
+
+.photo-editor__range:focus-visible {
+  outline: 2px solid #f5a623;
+  outline-offset: 4px;
+}
+
+
+/* =========================================================
+   HELP
+========================================================= */
+
+.photo-editor__help {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.55);
+
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+.photo-editor__reset {
+  min-height: 3.2rem;
+
+  padding: 0.8rem 1.4rem;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.25);
+
+  border-radius: 999px;
+
+  background: transparent;
+
+  color: #fff;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.photo-editor__reset:hover:not(:disabled) {
+  border-color:
+    rgba(255, 255, 255, 0.5);
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  transform: translateY(-1px);
+}
+
+.photo-editor__reset:focus-visible {
+  outline: 2px solid #f5a623;
+  outline-offset: 3px;
+}
+
+
+/* =========================================================
+   FRAMES
+========================================================= */
+
+.photo-editor__frames {
+  width: 100%;
+  min-width: 0;
+
+  padding-top: 1.5rem;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+}
+
+
+/* =========================================================
+   FRAMES HEADER
+========================================================= */
+
+.photo-editor__frames-header {
+  margin-bottom: 1rem;
+}
+
+.photo-editor__frames-eyebrow {
+  display: block;
+
+  margin-bottom: 0.3rem;
+
+  color: #f5a623;
+
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.photo-editor__frames-title {
+  margin: 0;
+
+  color: #fff;
+
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   FRAMES CAROUSEL
+========================================================= */
+
+.photo-editor__frames-carousel {
+  display: flex;
+
+  align-items: center;
+
+  width: 100%;
+  min-width: 0;
+
+  gap: 0.5rem;
+}
+
+
+/* =========================================================
+   FRAMES TRACK
+========================================================= */
+
+.photo-editor__frames-track {
+  display: flex;
+
+  flex: 1 1 auto;
+
+  align-items: flex-start;
+
+  gap: 0.55rem;
+
+  min-width: 0;
+
+  padding: 0.25rem 0.1rem 0.4rem;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scroll-behavior: smooth;
+
+  scrollbar-width: none;
+
+  overscroll-behavior-x: contain;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+.photo-editor__frames-track::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* =========================================================
+   FRAME OPTION
+========================================================= */
+
+.photo-editor__frame-option {
+  display: flex;
+  flex: 0 0 auto;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  width: 56px;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: rgba(255, 255, 255, 0.62);
+
+  cursor: pointer;
+
+  font: inherit;
+}
+
+
+/* =========================================================
+   FRAME PREVIEW
+========================================================= */
+
+.photo-editor__frame-preview {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 50px;
+  height: 63px;
+
+  overflow: hidden;
+
+  border: 2px solid transparent;
+  border-radius: 0.45rem;
+
+  background:
+    rgba(255, 255, 255, 0.055);
+
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+/* =========================================================
+   FRAME IMAGE
+========================================================= */
+
+.photo-editor__frame-preview img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+
+/* =========================================================
+   SIN MARCO
+========================================================= */
+
+.photo-editor__frame-preview--none {
+  border-color:
+    rgba(255, 255, 255, 0.15);
+
+  background:
+    rgba(255, 255, 255, 0.035);
+}
+
+.photo-editor__frame-none-icon {
+  color: rgba(255, 255, 255, 0.5);
+
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+
+/* =========================================================
+   FRAME NAME
+========================================================= */
+
+.photo-editor__frame-name {
+  display: block;
+
+  width: 100%;
+
+  margin-top: 0.35rem;
+
+  overflow: hidden;
+
+  color: inherit;
+
+  font-size: 0.62rem;
+  line-height: 1.2;
+
+  text-align: center;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  transition:
+    color 0.2s ease;
+}
+
+
+/* =========================================================
+   FRAME HOVER
+========================================================= */
+
+.photo-editor__frame-option:hover
+.photo-editor__frame-preview {
+  transform: translateY(-2px);
+
+  border-color:
+    rgba(245, 166, 35, 0.55);
+
+  background:
+    rgba(245, 166, 35, 0.06);
+}
+
+
+/* =========================================================
+   FRAME ACTIVE
+========================================================= */
+
+.photo-editor__frame-option.is-active
+.photo-editor__frame-preview {
+  border-color: #f5a623;
+
+  background:
+    rgba(245, 166, 35, 0.08);
+
+  box-shadow:
+    0 0 0 1px
+    rgba(245, 166, 35, 0.15);
+}
+
+.photo-editor__frame-option.is-active
+.photo-editor__frame-name {
+  color: #f5a623;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   FRAME FOCUS
+========================================================= */
+
+.photo-editor__frame-option:focus-visible {
+  outline: none;
+}
+
+.photo-editor__frame-option:focus-visible
+.photo-editor__frame-preview {
+  outline: 2px solid #f5a623;
+  outline-offset: 3px;
+}
+
+
+/* =========================================================
+   CAROUSEL ARROWS
+========================================================= */
+
+.photo-editor__frames-arrow {
+  display: flex;
+
+  flex: 0 0 auto;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.18);
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  color: #fff;
+
+  font-size: 1.4rem;
+  font-weight: 300;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.photo-editor__frames-arrow:hover:not(:disabled) {
+  border-color: #f5a623;
+
+  background:
+    rgba(245, 166, 35, 0.08);
+
+  color: #f5a623;
+}
+
+.photo-editor__frames-arrow:focus-visible {
+  outline: 2px solid #f5a623;
+  outline-offset: 3px;
+}
+
+
+/* =========================================================
+   ELEMENTOS DISABLED
+========================================================= */
+
+.photo-editor__frames-arrow:disabled,
+.photo-editor__reset:disabled,
+.photo-editor__download:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.4;
+
+  transform: none;
+}
+
+
+/* =========================================================
+   DOWNLOAD
+========================================================= */
+
+.photo-editor__download-section {
+  display: flex;
+  flex-direction: column;
+
+  gap: 0.75rem;
+
+  padding-top: 1.5rem;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+}
+
+.photo-editor__download {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+
+  min-height: 3.6rem;
+
+  padding: 0.9rem 1.5rem;
+
+  border: 0;
+
+  border-radius: 999px;
+
+  background: #f5a623;
+
+  color: #1a100a;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.photo-editor__download:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  background: #ffb22e;
+
+  box-shadow:
+    0 0.75rem 2rem
+    rgba(245, 166, 35, 0.18);
+}
+
+.photo-editor__download:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.photo-editor__download:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+
+/* =========================================================
+   DOWNLOAD INFO
+========================================================= */
+
+.photo-editor__download-info {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.45);
+
+  font-size: 0.75rem;
+  line-height: 1.45;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   PRIVACIDAD
+========================================================= */
+
+.photo-editor__privacy {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 0.75rem;
+
+  padding: 1rem;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.1);
+
+  border-radius: 0.8rem;
+
+  background:
+    rgba(255, 255, 255, 0.035);
+}
+
+.photo-editor__privacy-icon {
+  flex: 0 0 auto;
+
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.photo-editor__privacy strong {
+  display: block;
+
+  margin-bottom: 0.25rem;
+
+  color: rgba(255, 255, 255, 0.88);
+
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.photo-editor__privacy p {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.5);
+
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .photo-editor *,
+  .photo-editor *::before,
+  .photo-editor *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .photo-editor__workspace {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(260px, 0.75fr);
+
+    gap: 2rem;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .photo-editor {
+    padding: 2.5rem 1rem;
+  }
+
+
+  /* INTRO */
+
+  .photo-editor__intro {
+    margin-bottom: 2rem;
+  }
+
+  .photo-editor__title {
+    font-size:
+      clamp(
+        2.5rem,
+        12vw,
+        4rem
+      );
+  }
+
+
+  /* WORKSPACE */
+
+  .photo-editor__workspace {
+    grid-template-columns: 1fr;
+
+    gap: 2rem;
+  }
+
+
+  /* CANVAS */
+
+  .photo-editor__preview {
+    width: min(100%, 520px);
+    margin: 0 auto;
+  }
+
+
+  /* FRAMES */
+
+  .photo-editor__frames-carousel {
+    gap: 0.35rem;
+  }
+
+  .photo-editor__frame-option {
+    width: 52px;
+  }
+
+  .photo-editor__frame-preview {
+    width: 46px;
+    height: 58px;
+  }
+
+  .photo-editor__frames-arrow {
+    width: 30px;
+    height: 30px;
+
+    font-size: 1.25rem;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .photo-editor {
+    padding: 2rem 0.85rem;
+  }
+
+  .photo-editor__description {
+    font-size: 0.95rem;
+  }
+
+
+  /* EDITING */
+
+  .photo-editor__editing-controls {
+    gap: 1.25rem;
+  }
+
+
+  /* FRAMES */
+
+  .photo-editor__frames {
+    padding-top: 1.25rem;
+  }
+
+  .photo-editor__frame-option {
+    width: 50px;
+  }
+
+  .photo-editor__frame-preview {
+    width: 44px;
+    height: 55px;
+  }
+
+
+  /* PRIVACY */
+
+  .photo-editor__privacy {
+    padding: 0.85rem;
+  }
+
+}

@@ -1,0 +1,333 @@
+---
+import "./photo-editor.css";
+import { frames } from "./frames.data";
+---
+
+<section class="photo-editor">
+  <div class="photo-editor__container">
+    <!-- =====================================================
+         INTRO
+    ====================================================== -->
+
+    <div class="photo-editor__intro">
+      <span class="photo-editor__eyebrow"> Día de Muertos </span>
+
+      <h1 class="photo-editor__title">Crea tu retrato</h1>
+
+      <p class="photo-editor__description">
+        Sube una fotografía y personalízala. Tu imagen se procesa directamente
+        en tu dispositivo y no se almacena en ningún servidor.
+      </p>
+    </div>
+
+    <!-- =====================================================
+         WORKSPACE
+    ====================================================== -->
+
+    <div class="photo-editor__workspace">
+      <!-- ===================================================
+           PREVISUALIZACIÓN
+      ==================================================== -->
+
+      <div class="photo-editor__preview">
+        <div class="photo-editor__canvas-wrapper">
+          <canvas
+            id="photoCanvas"
+            class="photo-editor__canvas"
+            width="1080"
+            height="1350"
+            tabindex="0"
+            aria-label="Editor de fotografía. Arrastra la fotografía para ajustar el encuadre."
+          ></canvas>
+        </div>
+      </div>
+
+      <!-- ===================================================
+           CONTROLES
+      ==================================================== -->
+
+      <div class="photo-editor__controls">
+        <!-- =================================================
+             SUBIR FOTOGRAFÍA
+        ================================================== -->
+
+        <div class="photo-editor__upload-section">
+          <label
+            id="photoUploadLabel"
+            class="photo-editor__upload"
+            for="photoInput"
+          >
+            <span id="photoUploadText"> Seleccionar fotografía </span>
+
+            <input
+              id="photoInput"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-describedby="photoRequirements photoError"
+            />
+          </label>
+
+          <!-- ===============================================
+               REQUISITOS
+          ================================================ -->
+
+          <p id="photoRequirements" class="photo-editor__requirements">
+            Formatos permitidos: JPG, PNG y WebP. Tamaño máximo: 15 MB.
+          </p>
+
+          <!-- ===============================================
+               NOMBRE DEL ARCHIVO
+          ================================================ -->
+
+          <p id="photoName" class="photo-editor__filename">
+            Ninguna fotografía seleccionada
+          </p>
+
+          <!-- ===============================================
+               ESTADO DE PROCESAMIENTO
+          ================================================ -->
+
+          <div
+            id="photoStatus"
+            class="photo-editor__status"
+            role="status"
+            aria-live="polite"
+            hidden
+          >
+            <span class="photo-editor__status-spinner" aria-hidden="true"
+            ></span>
+
+            <span id="photoStatusText"> Procesando fotografía... </span>
+          </div>
+
+          <!-- ===============================================
+               ERROR
+          ================================================ -->
+
+          <p
+            id="photoError"
+            class="photo-editor__error"
+            role="alert"
+            aria-live="assertive"
+            hidden
+          >
+          </p>
+        </div>
+
+        <!-- =================================================
+             CONTROLES DE EDICIÓN
+        ================================================== -->
+
+        <div id="editingControls" class="photo-editor__editing-controls" hidden>
+          <!-- ===============================================
+               ZOOM
+          ================================================ -->
+
+          <div class="photo-editor__control">
+            <div class="photo-editor__control-header">
+              <label for="photoZoom"> Zoom </label>
+
+              <span id="zoomValue"> 100% </span>
+            </div>
+
+            <input
+              id="photoZoom"
+              class="photo-editor__range"
+              type="range"
+              min="1"
+              max="3"
+              step="0.01"
+              value="1"
+              aria-label="Zoom de la fotografía"
+            />
+          </div>
+
+          <!-- ===============================================
+               AYUDA
+          ================================================ -->
+
+          <p id="editorHelp" class="photo-editor__help">
+            Arrastra la fotografía para ajustar el encuadre.
+          </p>
+
+          <!-- ===============================================
+               RESTABLECER ENCUADRE
+          ================================================ -->
+
+          <button id="resetPhoto" class="photo-editor__reset" type="button">
+            Restablecer encuadre
+          </button>
+
+          <!-- ===============================================
+               SELECTOR DE MARCOS
+          ================================================ -->
+
+          <div class="photo-editor__frames">
+            <!-- =============================================
+                 ENCABEZADO
+            ============================================== -->
+
+            <div class="photo-editor__frames-header">
+              <span class="photo-editor__frames-eyebrow">
+                Personaliza tu retrato
+              </span>
+
+              <h2 class="photo-editor__frames-title">Elige tu marco</h2>
+            </div>
+
+            <!-- =============================================
+                 CARRUSEL
+            ============================================== -->
+
+            <div class="photo-editor__frames-carousel">
+              <!-- ===========================================
+                   FLECHA ANTERIOR
+              ============================================ -->
+
+              <button
+                id="framesPrev"
+                class="photo-editor__frames-arrow
+                  photo-editor__frames-arrow--prev"
+                type="button"
+                aria-label="Ver marcos anteriores"
+              >
+                ‹
+              </button>
+
+              <!-- ===========================================
+                   TRACK
+              ============================================ -->
+
+              <div
+                id="frameSelector"
+                class="photo-editor__frames-track"
+                role="radiogroup"
+                aria-label="Selecciona un marco"
+              >
+                <!-- =========================================
+                     SIN MARCO
+                ========================================== -->
+
+                <button
+                  class="photo-editor__frame-option
+                    is-active"
+                  type="button"
+                  data-frame=""
+                  data-frame-id="none"
+                  role="radio"
+                  aria-checked="true"
+                  aria-label="Sin marco"
+                >
+                  <span
+                    class="photo-editor__frame-preview
+                      photo-editor__frame-preview--none"
+                  >
+                    <span
+                      class="photo-editor__frame-none-icon"
+                      aria-hidden="true"
+                    >
+                      ×
+                    </span>
+                  </span>
+
+                  <span class="photo-editor__frame-name"> Sin marco </span>
+                </button>
+
+                <!-- =========================================
+                     MARCOS DISPONIBLES
+                ========================================== -->
+
+                {
+                  frames.map((frame) => (
+                    <button
+                      class="photo-editor__frame-option"
+                      type="button"
+                      data-frame={frame.src}
+                      data-frame-id={frame.id}
+                      role="radio"
+                      aria-checked="false"
+                      aria-label={`Seleccionar ${frame.name}`}
+                    >
+                      <span class="photo-editor__frame-preview">
+                        <img
+                          src={frame.src}
+                          alt=""
+                          loading="lazy"
+                          draggable="false"
+                          width="50"
+                          height="63"
+                        />
+                      </span>
+
+                      <span class="photo-editor__frame-name">{frame.name}</span>
+                    </button>
+                  ))
+                }
+              </div>
+
+              <!-- ===========================================
+                   FLECHA SIGUIENTE
+              ============================================ -->
+
+              <button
+                id="framesNext"
+                class="photo-editor__frames-arrow
+                  photo-editor__frames-arrow--next"
+                type="button"
+                aria-label="Ver siguientes marcos"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+
+          <!-- ===============================================
+               DESCARGA
+          ================================================ -->
+
+          <div class="photo-editor__download-section">
+            <button
+              id="downloadPhoto"
+              class="photo-editor__download"
+              type="button"
+              disabled
+            >
+              <span id="downloadText"> Descargar imagen </span>
+            </button>
+
+            <p class="photo-editor__download-info">
+              Tu imagen se generará en formato PNG a 1080 × 1350 px.
+            </p>
+          </div>
+
+          <!-- ===============================================
+               PRIVACIDAD
+          ================================================ -->
+
+          <div class="photo-editor__privacy">
+            <span class="photo-editor__privacy-icon" aria-hidden="true">
+              🔒
+            </span>
+
+            <div>
+              <strong> Tu fotografía permanece en tu dispositivo </strong>
+
+              <p>
+                La imagen se procesa directamente en tu navegador. No se envía
+                ni se almacena en ningún servidor.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     LÓGICA DEL EDITOR
+========================================================= -->
+
+<script>
+  import "./photo-editor.ts";
+</script>
